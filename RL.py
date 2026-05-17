@@ -15,14 +15,14 @@ episodes = 1
 
 print("env.action_space.shape:", env.action_space)  
 
-# for episode in range(episodes):
-#     state = env.reset()
-#     done = False
+for episode in range(episodes):
+    state = env.reset()
+    done = False
 
-#     while not done:
-#         action = env.action_space.sample()  # random action
-#         observation, reward, terminated, truncated, info = env.step(action)
-#         # score += reward
+    while not done:
+        action = env.action_space.sample()  # random action
+        observation, reward, terminated, truncated, info = env.step(action)
+        # score += reward
 
 
 model = torch.nn.Sequential(
