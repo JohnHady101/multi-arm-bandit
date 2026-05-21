@@ -1,32 +1,39 @@
-from kaggle_environments import make
+import math
+from kaggle_environments.envs.orbit_wars.orbit_wars import Planet
 
-try:
-    env = make("orbit_wars", configuration={"seed": 42}, debug=True)
-except Exception as e:
-    print(f"Failed to create environment: {e}")
-    print("Try: pip install --upgrade kaggle-environments")
-    exit(1)
+def nearest_planet_sniper(obs):
+    moves = []
+    player = obs.get("player", 0) if isinstance(obs, dict) else obs.player
+    raw_planets = obs.get("planets", []) if isinstance(obs, dict) else obs.planets
+    planets = [Planet(*p) for p in raw_planets]
 
-# Inspect the environment spec before running
-print("=== ENV SPEC ===")
-print("Action Space:", env.specification.action)
-print("Observation Space:", env.specification.observation)
-print("Configuration:", env.configuration)
+    # Separate our planets from targets
+    my_planets = [p for p in planets if p.owner == player]
+    targets = [p for p in planets if p.owner != player]
 
-try:
-    env.run(["my_agent.py", "random"])
-except Exception as e:
-    print(f"Failed to run environment: {e}")
-    exit(1)
+    if not targets:
+        return moves
 
-# Results
-final = env.steps[-1]
-print("\n--- Final Results ---")
-for i, s in enumerate(final):
-    print(f"Player {i}: reward={s.reward}, status={s.status}")
+    for mine in my_planets:
+        # Find the nearest planet we don't own
+        nearest = None
+        min_dist = float('inf')
+        for t in targets:
+            dist = math.sqrt((mine.x - t.x)**2 + (mine.y - t.y)**2)
+            if dist < min_dist:
+                min_dist = dist
+                nearest = t
 
-rewards = [s.reward for s in final]
-winner = rewards.index(max(rewards))
-print(f"\nWinner: Player {winner}")
+        if nearest is None:
+            continue
 
-env.render(mode="ipython", width=800, height=600)
+        # How many ships do we need? Target's garrison + 1
+        ships_needed = max(nearest.ships + 1, 20)
+
+        # Only send if we have enough
+        if mine.ships >= ships_needed:
+            # Calculate angle from our planet to the target
+            angle = math.atan2(nearest.y - mine.y, nearest.x - mine.x)
+            moves.append([mine.id, angle, ships_needed])
+
+    return moves
