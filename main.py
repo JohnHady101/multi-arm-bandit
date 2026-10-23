@@ -3,16 +3,16 @@ import numpy as np
 # 1. Initialize the default random number generator
 rng = np.random.default_rng()
 
-TOTAL_REWARD = 0
-LIST_TOTAL_REWARDS = [0]
+AVG_REWARDS =[0]
 Q = [0, 0, 0]
+EPSILON = 0.1
 
 def choose(i, alpha: float):
     global TOTAL_REWARD
     reward = rng.normal(loc=2*i, scale= 1, size= None)
     Q[i] += Q[i] + alpha * (reward - Q[i])
-    TOTAL_REWARD += reward
-    LIST_TOTAL_REWARDS.append(TOTAL_REWARD)
+    AVG_REWARDS.append(AVG_REWARDS[-1] + (1 / len(AVG_REWARDS)) * (reward - AVG_REWARDS[-1]))
+    
 
 
 class ploitation:
@@ -34,21 +34,11 @@ class ploitation:
         return chosen # it returns an index
 
 
-p = ploitation("epsilon-greedy", 0.1)
+p = ploitation("epsilon-greedy", epsilon= EPSILON)
 
 for i in range(500):
     action = p.the_action_chosen()
     choose(action, alpha= 0.3)
-
-N = 10    
-LAST_N = []
-
-
-for i in range(N, 500):
-    _cache = 0
-    for j in range(i-N, i):
-        _cache += LIST_TOTAL_REWARDS[j]
-    LAST_N.append(_cache) 
 
 
 
@@ -57,7 +47,7 @@ import matplotlib.pyplot as plt
 
 # Create the plot
 plt.figure(figsize=(10, 6))
-plt.plot(range(len(LAST_N)), LAST_N, marker='o', linestyle='-', color='blue', linewidth=2, markersize=0)
+plt.plot(range(len(AVG_REWARDS)), AVG_REWARDS, marker='o', linestyle='-', color='blue', linewidth=2, markersize=0)
 
 # Add labels and title
 plt.xlabel('Index', fontsize=12)
