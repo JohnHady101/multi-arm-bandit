@@ -1,39 +1,72 @@
-import math
-from kaggle_environments.envs.orbit_wars.orbit_wars import Planet
+import numpy as np
 
-def nearest_planet_sniper(obs):
-    moves = []
-    player = obs.get("player", 0) if isinstance(obs, dict) else obs.player
-    raw_planets = obs.get("planets", []) if isinstance(obs, dict) else obs.planets
-    planets = [Planet(*p) for p in raw_planets]
+# 1. Initialize the default random number generator
+rng = np.random.default_rng()
 
-    # Separate our planets from targets
-    my_planets = [p for p in planets if p.owner == player]
-    targets = [p for p in planets if p.owner != player]
+TOTAL_REWARD = 0
+LIST_TOTAL_REWARDS = [0]
+Q = [0, 0, 0]
 
-    if not targets:
-        return moves
+def choose(i, alpha: float):
+    global TOTAL_REWARD
+    reward = rng.normal(loc=2*i, scale= 1, size= None)
+    Q[i] += Q[i] + alpha * (reward - Q[i])
+    TOTAL_REWARD += reward
+    LIST_TOTAL_REWARDS.append(TOTAL_REWARD)
 
-    for mine in my_planets:
-        # Find the nearest planet we don't own
-        nearest = None
-        min_dist = float('inf')
-        for t in targets:
-            dist = math.sqrt((mine.x - t.x)**2 + (mine.y - t.y)**2)
-            if dist < min_dist:
-                min_dist = dist
-                nearest = t
 
-        if nearest is None:
-            continue
+class ploitation:
+    def __init__(self, method: str, epsilon: float):
+        self.method = method
+        self.epsilon = epsilon
 
-        # How many ships do we need? Target's garrison + 1
-        ships_needed = max(nearest.ships + 1, 20)
+    def the_action_chosen(self):
+        if self.method == "epsilon-greedy":
+            return self._epsilon_greedy(self.epsilon)
 
-        # Only send if we have enough
-        if mine.ships >= ships_needed:
-            # Calculate angle from our planet to the target
-            angle = math.atan2(nearest.y - mine.y, nearest.x - mine.x)
-            moves.append([mine.id, angle, ships_needed])
 
-    return moves
+    def _epsilon_greedy(self, epsilon):
+        random_action = np.random.choice(range(len(Q)), size = 1)[0] # let's see if range works or have to make a list
+        best_action_at_t = np.argmax(Q)
+
+        chosen = np.random.choice([random_action, best_action_at_t], size = None, p=[epsilon, 1 - epsilon])
+
+        return chosen # it returns an index
+
+
+p = ploitation("epsilon-greedy", 0.1)
+
+for i in range(500):
+    action = p.the_action_chosen()
+    choose(action, alpha= 0.3)
+
+N = 10    
+LAST_N = []
+
+
+for i in range(N, 500):
+    _cache = 0
+    for j in range(i-N, i):
+        _cache += LIST_TOTAL_REWARDS[j]
+    LAST_N.append(_cache) 
+
+
+
+import matplotlib.pyplot as plt
+
+
+# Create the plot
+plt.figure(figsize=(10, 6))
+plt.plot(range(len(LAST_N)), LAST_N, marker='o', linestyle='-', color='blue', linewidth=2, markersize=0)
+
+# Add labels and title
+plt.xlabel('Index', fontsize=12)
+plt.ylabel('Value', fontsize=12)
+plt.title('List Values by Index', fontsize=14)
+
+# Add grid for better readability
+plt.grid(True, alpha=0.3)
+
+# Show the plot
+plt.tight_layout()
+plt.show()
