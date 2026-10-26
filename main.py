@@ -2,14 +2,25 @@ import numpy as np
 
 # 1. Initialize the default random number generator
 rng = np.random.default_rng()
+AVG_REWARDS = (
+    [0],
+    [0]
+)
 
-AVG_REWARDS =[0]
-Q = [0, 0, 0]
-EPSILON = 0.1
 
-def choose(action, q, avg_rewards, alpha: float):
-    reward = rng.normal(loc=2*i, scale= 1, size= None)
-    q[i] += q[i] + alpha * (reward - q[i])
+Q = (
+    [0, 0, 0],
+    [3, 3, 3]
+)
+
+EPSILON = (
+    0.1,
+    0.1
+)
+
+def choose(action, q, avg_rewards):
+    reward = rng.normal(loc=2*action, scale= 1, size= None)
+    q[action] += q[action] + (1 / len(avg_rewards)) * (reward - q[action])
     avg_rewards.append(avg_rewards[-1] + (1 / len(avg_rewards)) * (reward - avg_rewards[-1]))
     
 
@@ -19,9 +30,9 @@ class ploitation:
         self.method = method
         self.epsilon = epsilon
 
-    def the_action_chosen(self):
+    def the_action_chosen(self, q):
         if self.method == "epsilon-greedy":
-            return self._epsilon_greedy(self.epsilon, Q)
+            return self._epsilon_greedy(self.epsilon, q)
 
 
     def _epsilon_greedy(self, epsilon, q):
@@ -33,11 +44,19 @@ class ploitation:
         return chosen # it returns an index
 
 
-p = ploitation("epsilon-greedy", epsilon= EPSILON)
+p = (
+    ploitation("epsilon-greedy", epsilon= EPSILON[0]),
+    ploitation("epsilon-greedy", epsilon= EPSILON[1])
+
+)
 
 for i in range(500):
-    action = p.the_action_chosen()
-    choose(action = action, q = Q, avg_rewards= AVG_REWARDS, alpha= 0.3)
+    action= [0, 0]
+    action[0] = p[0].the_action_chosen(Q[0])
+    action[1] = p[1].the_action_chosen(Q[1])
+    choose(action = action[0], q = Q[0], avg_rewards= AVG_REWARDS[0])
+    choose(action = action[1], q = Q[1], avg_rewards= AVG_REWARDS[1])
+
 
 
 import matplotlib.pyplot as plt
@@ -45,7 +64,9 @@ import matplotlib.pyplot as plt
 
 # Create the plot
 plt.figure(figsize=(10, 6))
-plt.plot(range(len(AVG_REWARDS)), AVG_REWARDS, marker='o', linestyle='-', color='blue', linewidth=2, markersize=0)
+plt.plot(range(len(AVG_REWARDS[0])), AVG_REWARDS[0], marker='o', linestyle='-', color='blue', linewidth=2, markersize=0)
+plt.plot(range(len(AVG_REWARDS[1])), AVG_REWARDS[1], marker='o', linestyle='-', color='red', linewidth=2, markersize=0)
+
 
 # Add labels and title
 plt.xlabel('Index', fontsize=12)
